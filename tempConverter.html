@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chunky Temp Converter</title>
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-width: 3px;
+            --radius: 16px;
+            --shadow: 8px 8px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem; /* Better spacing for mobile */
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 450px;
+            padding: 2.5rem;
+            border: var(--border-width) solid var(--text-main);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transform: translateY(0);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+                border-radius: 12px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .result-value {
+                font-size: 2rem;
+            }
+        }
+
+        .container:hover {
+            transform: translateY(-4px);
+            box-shadow: 12px 12px 0px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: var(--border-width) solid var(--text-main);
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.2s ease;
+            background: #fff;
+            appearance: none; /* Reset for mobile Safari */
+        }
+
+        /* Custom arrow for select to ensure consistency */
+        select {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1em;
+            padding-right: 2.5rem;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .btn-convert {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: white;
+            background-color: var(--primary);
+            border: var(--border-width) solid var(--text-main);
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.1s ease;
+            box-shadow: 4px 4px 0px var(--text-main);
+            margin-top: 1rem;
+            touch-action: manipulation; /* Optimizes for touch devices */
+        }
+
+        .btn-convert:hover {
+            background-color: var(--primary-hover);
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0px var(--text-main);
+        }
+
+        .btn-convert:active {
+            transform: translate(2px, 2px);
+            box-shadow: 0px 0px 0px var(--text-main);
+        }
+
+        .result-card {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f9fafb;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: none;
+        }
+
+        .result-card.active {
+            display: block;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            display: block;
+            word-break: break-word; /* Prevents overflow on very long numbers */
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-text {
+            animation: countUp 0.4s ease forwards;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>TempShift</h1>
+    <p class="subtitle">Quick & Bold Conversions</p>
+
+    <div class="form-group">
+        <label for="tempInput">Degrees</label>
+        <input type="number" id="tempInput" placeholder="e.g. 32" step="any" inputmode="decimal">
+        <div id="errorMsg" class="error-msg">Please enter a valid number</div>
+    </div>
+
+    <div class="form-group">
+        <label for="unitInput">From Unit</label>
+        <select id="unitInput">
+            <option value="C">Celsius (°C)</option>
+            <option value="F">Fahrenheit (°F)</option>
+            <option value="K">Kelvin (K)</option>
+        </select>
+    </div>
+
+    <button class="btn-convert" onclick="convert()">Convert Now</button>
+
+    <div id="resultArea" class="result-card">
+        <div id="resultsList">
+            <!-- Dynamically populated -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function convert() {
+        const input = document.getElementById('tempInput');
+        const unit = document.getElementById('unitInput').value;
+        const resultArea = document.getElementById('resultArea');
+        const resultsList = document.getElementById('resultsList');
+        const errorMsg = document.getElementById('errorMsg');
+
+        if (input.value === "" || isNaN(input.value)) {
+            errorMsg.style.display = 'block';
+            resultArea.classList.remove('active');
+            return;
+        }
+        errorMsg.style.display = 'none';
+
+        const val = parseFloat(input.value);
+        let results = [];
+
+        if (unit === 'C') {
+            results.push({ val: (val * 9/5) + 32, unit: '°F' });
+            results.push({ val: val + 273.15, unit: 'K' });
+        } else if (unit === 'F') {
+            results.push({ val: (val - 32) * 5/9, unit: '°C' });
+            results.push({ val: (val - 32) * 5/9 + 273.15, unit: 'K' });
+        } else if (unit === 'K') {
+            results.push({ val: val - 273.15, unit: '°C' });
+            results.push({ val: (val - 273.15) * 9/5 + 32, unit: '°F' });
+        }
+
+        resultsList.innerHTML = '';
+        results.forEach(res => {
+            const div = document.createElement('div');
+            div.style.marginBottom = "1rem";
+            div.innerHTML = `
+                <span class="result-value animate-text">${res.val.toFixed(2)}</span>
+                <span class="result-label">${res.unit}</span>
+            `;
+            resultsList.appendChild(div);
+        });
+
+        resultArea.classList.add('active');
+        
+        // Auto-scroll to result on mobile if needed
+        if (window.innerWidth < 480) {
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    document.getElementById('tempInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            convert();
+        }
+    });
+</script>
+
+</body>
+</html>
